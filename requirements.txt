@@ -1,0 +1,6 @@
+# Requisitos para ESP32 Serial Monitor
+# Para instalar: pip install -r requirements.txt
+
+PyQt6>=6.5.0
+pyserial>=3.5
+pyqtgraph>=0.13.0
