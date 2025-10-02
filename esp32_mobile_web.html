@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 UDP Controller</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .sensor-card {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sensor-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .sensor-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .light-card {
+            grid-column: span 2;
+        }
+
+        .led-controls {
+            margin-bottom: 20px;
+        }
+
+        .led-controls h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .led-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .led-button {
+            background: linear-gradient(145deg, #ff6b6b, #ff5252);
+            border: none;
+            border-radius: 15px;
+            padding: 15px;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .led-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .led-button:active {
+            transform: translateY(0);
+        }
+
+        .led-button.on {
+            background: linear-gradient(145deg, #4CAF50, #45a049);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .led-button.on:hover {
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            flex: 1;
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .status.connected {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .config {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .config input {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-size: 14px;
+            width: 150px;
+            margin: 0 5px;
+        }
+
+        .config input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 ESP32 UDP Controller</h1>
+        
+        <div class="config">
+            <label>ESP32 IP:</label>
+            <input type="text" id="esp32ip" value="10.175.23.159" placeholder="192.168.1.100">
+        </div>
+
+        <div class="sensor-grid">
+            <div class="sensor-card">
+                <h3>🌡️ Temperatura</h3>
+                <div class="sensor-value" id="temp">--°C</div>
+            </div>
+            <div class="sensor-card">
+                <h3>💧 Humedad</h3>
+                <div class="sensor-value" id="humidity">--%</div>
+            </div>
+            <div class="sensor-card light-card">
+                <h3>☀️ Luminosidad</h3>
+                <div class="sensor-value" id="light">--%</div>
+            </div>
+        </div>
+
+        <div class="led-controls">
+            <h3>💡 Control LEDs</h3>
+            <div class="led-grid">
+                <button class="led-button" id="led1" onclick="toggleLED(1)">LED 1</button>
+                <button class="led-button" id="led2" onclick="toggleLED(2)">LED 2</button>
+                <button class="led-button" id="led3" onclick="toggleLED(3)">LED 3</button>
+                <button class="led-button" id="led4" onclick="toggleLED(4)">LED 4</button>
+            </div>
+        </div>
+
+        <div class="control-buttons">
+            <button class="control-btn" onclick="requestData()">🔄 Actualizar</button>
+            <button class="control-btn" onclick="allLEDsOff()">⚫ Apagar Todo</button>
+        </div>
+
+        <div class="status" id="status">🔴 Desconectado</div>
+    </div>
+
+    <script>
+        let esp32IP = "10.175.23.159";
+        let ledStates = [false, false, false, false];
+        let lastDataTime = 0;
+
+        // Configuración de IP
+        document.getElementById('esp32ip').addEventListener('change', function() {
+            esp32IP = this.value;
+            updateStatus("IP actualizada: " + esp32IP, "");
+        });
+
+        // Control de LEDs
+        function toggleLED(ledNumber) {
+            sendCommand(ledNumber.toString());
+            ledStates[ledNumber - 1] = !ledStates[ledNumber - 1];
+            updateLEDButton(ledNumber, ledStates[ledNumber - 1]);
+        }
+
+        function allLEDsOff() {
+            sendCommand("0");
+            ledStates = [false, false, false, false];
+            for (let i = 1; i <= 4; i++) {
+                updateLEDButton(i, false);
+            }
+        }
+
+        function updateLEDButton(ledNumber, isOn) {
+            const button = document.getElementById('led' + ledNumber);
+            if (isOn) {
+                button.classList.add('on');
+                button.textContent = 'LED ' + ledNumber + ' ✓';
+            } else {
+                button.classList.remove('on');
+                button.textContent = 'LED ' + ledNumber;
+            }
+        }
+
+        // Comunicación UDP (simulada con HTTP)
+        function sendCommand(command) {
+            // Nota: Los navegadores no pueden enviar UDP directamente
+            // Esta es una implementación de fallback que podría usar HTTP
+            updateStatus("Comando enviado: " + command, "");
+            
+            // Aquí podrías implementar una comunicación vía WebSocket
+            // o un servidor proxy que convierta HTTP a UDP
+        }
+
+        function requestData() {
+            updateStatus("Solicitando datos...", "");
+            
+            // Simulación de datos para demostración
+            // En una implementación real, esto haría una petición al ESP32
+            simulateDataUpdate();
+        }
+
+        function simulateDataUpdate() {
+            // Datos simulados para demostración
+            const temp = (20 + Math.random() * 10).toFixed(1);
+            const humidity = (40 + Math.random() * 30).toFixed(1);
+            const light = Math.floor(Math.random() * 100);
+            
+            document.getElementById('temp').textContent = temp + "°C";
+            document.getElementById('humidity').textContent = humidity + "%";
+            document.getElementById('light').textContent = light + "%";
+            
+            updateStatus("Datos actualizados", "connected");
+            lastDataTime = Date.now();
+        }
+
+        function updateStatus(message, className) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + className;
+        }
+
+        // Actualización automática cada 5 segundos
+        setInterval(() => {
+            if (Date.now() - lastDataTime > 30000) {
+                updateStatus("🔴 Sin datos recientes", "error");
+            }
+        }, 5000);
+
+        // Inicialización
+        updateStatus("🟡 Listo para conectar", "");
+        
+        // Mensaje informativo
+        setTimeout(() => {
+            updateStatus("💡 Toca 'Actualizar' para obtener datos", "");
+        }, 2000);
+    </script>
+</body>
+</html>
