@@ -41,7 +41,17 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="97581fcc-986d-475e-809e-027434156f40" name="Changes" comment="" />
+    <list default="true" id="97581fcc-986d-475e-809e-027434156f40" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/AndroidProjectSystem.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/runConfigurations.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app_2/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../app_2/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../app_2/app/src/main/java/com/esp32/udpcontrol/SensorData.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../app_2/app/src/main/java/com/esp32/udpcontrol/SensorData.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../esp32_serial_monitor.py" beforeDir="false" afterPath="$PROJECT_DIR$/../esp32_serial_monitor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../main.ino" beforeDir="false" afterPath="$PROJECT_DIR$/../main.ino" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -59,18 +69,18 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "DanielAraqueStudios"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;DanielAraqueStudios&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/DanielAraqueStudios/lab-udp-micros.git",
-    "accountId": "b9bf129c-a28d-40fd-9eab-3a0dc63765b7"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/DanielAraqueStudios/lab-udp-micros.git&quot;,
+    &quot;accountId&quot;: &quot;b9bf129c-a28d-40fd-9eab-3a0dc63765b7&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 8
 }</component>
@@ -88,6 +98,8 @@
     "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "android.gradle.sync.needed": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "main",

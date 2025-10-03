@@ -50,6 +50,16 @@ class SerialThread(QThread):
             self.serial_port.close()
         self.connection_status.emit(False)
     
+    def send_command(self, command):
+        """Enviar comando al ESP32"""
+        try:
+            if self.serial_port and self.serial_port.is_open:
+                self.serial_port.write(f"{command}\n".encode('utf-8'))
+                return True
+        except Exception as e:
+            return False
+        return False
+    
     def run(self):
         """Ejecutar el hilo de lectura serial"""
         while self.is_running:
@@ -140,14 +150,371 @@ class SensorCard(QFrame):
 class LEDControl(QFrame):
     """Widget para controlar y mostrar estado de LEDs"""
     
-    def __init__(self, led_number, gpio_pin):
+    def __init__(self, led_number, gpio_pin, serial_thread=None):
         super().__init__()
         self.led_number = led_number
         self.gpio_pin = gpio_pin
         self.is_on = False
+        self.serial_thread = serial_thread
         
         self.setFrameStyle(QFrame.Shape.Box)
         self.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.05);
+                border: 2px solid #34495e;
+                border-radius: 10px;
+                margin: 5px;
+                padding: 10px;
+            }
+        """)
+        
+        layout = QVBoxLayout()
+        
+        # Título
+        title = QLabel(f"LED {led_number}")
+        title.setStyleSheet("font-weight: bold; color: #ecf0f1; font-size: 14px;")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # Pin info
+        pin_info = QLabel(f"GPIO {gpio_pin}")
+        pin_info.setStyleSheet("color: #bdc3c7; font-size: 10px;")
+        pin_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # LED visual
+        self.led_visual = QLabel("⚫")
+        self.led_visual.setStyleSheet("font-size: 30px;")
+        self.led_visual.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # Botón de control
+        self.control_btn = QPushButton("OFF")
+        self.control_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+        """)
+        self.control_btn.clicked.connect(self.toggle_led)
+        
+        # Estado
+        self.status_label = QLabel("APAGADO")
+        self.status_label.setStyleSheet("color: #e74c3c; font-size: 10px;")
+        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        layout.addWidget(title)
+        layout.addWidget(pin_info)
+        layout.addWidget(self.led_visual)
+        layout.addWidget(self.control_btn)
+        layout.addWidget(self.status_label)
+        
+        self.setLayout(layout)
+        self.setFixedWidth(120)
+        self.setFixedHeight(160)
+    
+    def toggle_led(self):
+        """Alternar estado del LED"""
+        if self.serial_thread:
+            command = f"test{self.led_number}"
+            if self.serial_thread.send_command(command):
+                self.is_on = not self.is_on
+                self.update_visual()
+    
+    def set_state(self, state):
+        """Establecer estado del LED desde datos recibidos"""
+        self.is_on = state
+        self.update_visual()
+    
+    def update_visual(self):
+        """Actualizar visualización del LED"""
+        if self.is_on:
+            self.led_visual.setText("🟢")
+            self.control_btn.setText("ON")
+            self.control_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #27ae60;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 5px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #229954;
+                }
+            """)
+            self.status_label.setText("ENCENDIDO")
+            self.status_label.setStyleSheet("color: #27ae60; font-size: 10px;")
+        else:
+            self.led_visual.setText("⚫")
+            self.control_btn.setText("OFF")
+            self.control_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #e74c3c;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 5px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #c0392b;
+                }
+            """)
+            self.status_label.setText("APAGADO")
+            self.status_label.setStyleSheet("color: #e74c3c; font-size: 10px;")
+
+
+class DiagnosticPanel(QFrame):
+    """Panel de diagnósticos y comandos de prueba"""
+    
+    def __init__(self, serial_thread=None):
+        super().__init__()
+        self.serial_thread = serial_thread
+        
+        self.setFrameStyle(QFrame.Shape.Box)
+        self.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.05);
+                border: 2px solid #9b59b6;
+                border-radius: 10px;
+                margin: 5px;
+                padding: 15px;
+            }
+        """)
+        
+        layout = QVBoxLayout()
+        
+        # Título
+        title = QLabel("🔧 Diagnósticos y Pruebas")
+        title.setStyleSheet("font-weight: bold; color: #ecf0f1; font-size: 16px; margin-bottom: 10px;")
+        
+        # Información de conexión
+        self.connection_info = QLabel("📡 Estado: Desconectado")
+        self.connection_info.setStyleSheet("color: #e74c3c; font-size: 12px;")
+        
+        # Estadísticas UDP
+        self.udp_stats = QLabel("📊 Mensajes UDP: 0 enviados, 0 recibidos")
+        self.udp_stats.setStyleSheet("color: #3498db; font-size: 12px;")
+        
+        # IP Information
+        self.ip_info = QLabel("🌐 ESP32: --.--.--.-- | Teléfono: --.--.--.--")
+        self.ip_info.setStyleSheet("color: #f39c12; font-size: 12px;")
+        
+        # Botones de prueba
+        test_layout = QGridLayout()
+        
+        # Botones individuales
+        self.test_buttons = []
+        for i in range(1, 5):
+            btn = QPushButton(f"Test LED {i}")
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #3498db;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    padding: 8px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #2980b9;
+                }
+            """)
+            btn.clicked.connect(lambda checked, x=i: self.send_test_command(f"test{x}"))
+            test_layout.addWidget(btn, 0, i-1)
+            self.test_buttons.append(btn)
+        
+        # Botones globales
+        all_on_btn = QPushButton("🟢 Todos ON")
+        all_on_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #27ae60;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #229954;
+            }
+        """)
+        all_on_btn.clicked.connect(lambda: self.send_test_command("allon"))
+        
+        all_off_btn = QPushButton("🔴 Todos OFF")
+        all_off_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+        """)
+        all_off_btn.clicked.connect(lambda: self.send_test_command("alloff"))
+        
+        status_btn = QPushButton("📊 Estado Sistema")
+        status_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #9b59b6;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #8e44ad;
+            }
+        """)
+        status_btn.clicked.connect(lambda: self.send_test_command("status"))
+        
+        test_layout.addWidget(all_on_btn, 1, 0)
+        test_layout.addWidget(all_off_btn, 1, 1)
+        test_layout.addWidget(status_btn, 1, 2, 1, 2)
+        
+        layout.addWidget(title)
+        layout.addWidget(self.connection_info)
+        layout.addWidget(self.udp_stats)
+        layout.addWidget(self.ip_info)
+        layout.addLayout(test_layout)
+        
+        self.setLayout(layout)
+    
+    def send_test_command(self, command):
+        """Enviar comando de prueba"""
+        if self.serial_thread:
+            success = self.serial_thread.send_command(command)
+            if success:
+                print(f"📤 Comando enviado: {command}")
+            else:
+                print(f"❌ Error enviando comando: {command}")
+    
+    def update_connection_status(self, connected, esp32_ip="", phone_ip=""):
+        """Actualizar estado de conexión"""
+        if connected:
+            self.connection_info.setText("📡 Estado: ✅ Conectado")
+            self.connection_info.setStyleSheet("color: #27ae60; font-size: 12px;")
+            if esp32_ip and phone_ip:
+                self.ip_info.setText(f"🌐 ESP32: {esp32_ip} | Teléfono: {phone_ip}")
+        else:
+            self.connection_info.setText("📡 Estado: ❌ Desconectado")
+            self.connection_info.setStyleSheet("color: #e74c3c; font-size: 12px;")
+            self.ip_info.setText("🌐 ESP32: --.--.--.-- | Teléfono: --.--.--.--")
+    
+    def update_udp_stats(self, sent=0, received=0):
+        """Actualizar estadísticas UDP"""
+        self.udp_stats.setText(f"📊 Mensajes UDP: {sent} enviados, {received} recibidos")
+
+
+class NetworkInfo(QFrame):
+    """Panel de información de red"""
+    
+    def __init__(self):
+        super().__init__()
+        
+        self.setFrameStyle(QFrame.Shape.Box)
+        self.setStyleSheet("""
+            QFrame {
+                background-color: rgba(255, 255, 255, 0.05);
+                border: 2px solid #f39c12;
+                border-radius: 10px;
+                margin: 5px;
+                padding: 15px;
+            }
+        """)
+        
+        layout = QVBoxLayout()
+        
+        # Título
+        title = QLabel("🌐 Información de Red")
+        title.setStyleSheet("font-weight: bold; color: #ecf0f1; font-size: 16px; margin-bottom: 10px;")
+        
+        # WiFi Info
+        self.wifi_ssid = QLabel("📡 SSID: --")
+        self.wifi_ssid.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        self.wifi_status = QLabel("🔐 Estado: --")
+        self.wifi_status.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        self.esp32_ip = QLabel("🏠 IP ESP32: --")
+        self.esp32_ip.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        self.gateway_ip = QLabel("🌍 Gateway: --")
+        self.gateway_ip.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        self.phone_ip = QLabel("📱 IP Teléfono: --")
+        self.phone_ip.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        self.rssi = QLabel("📶 RSSI: -- dBm")
+        self.rssi.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        self.ports = QLabel("🔌 Puertos: Local -- | Remoto --")
+        self.ports.setStyleSheet("color: #ecf0f1; font-size: 12px;")
+        
+        layout.addWidget(title)
+        layout.addWidget(self.wifi_ssid)
+        layout.addWidget(self.wifi_status)
+        layout.addWidget(self.esp32_ip)
+        layout.addWidget(self.gateway_ip)
+        layout.addWidget(self.phone_ip)
+        layout.addWidget(self.rssi)
+        layout.addWidget(self.ports)
+        
+        self.setLayout(layout)
+    
+    def update_network_info(self, data):
+        """Actualizar información de red"""
+        if "SSID:" in data:
+            ssid = data.split("SSID:")[1].strip()
+            self.wifi_ssid.setText(f"📡 SSID: {ssid}")
+        
+        if "IP Local:" in data:
+            ip = data.split("IP Local:")[1].strip()
+            self.esp32_ip.setText(f"🏠 IP ESP32: {ip}")
+        
+        if "Gateway:" in data:
+            gateway = data.split("Gateway:")[1].strip()
+            self.gateway_ip.setText(f"🌍 Gateway: {gateway}")
+        
+        if "Teléfono destino:" in data:
+            phone = data.split("Teléfono destino:")[1].strip()
+            self.phone_ip.setText(f"📱 IP Teléfono: {phone}")
+        
+        if "RSSI:" in data:
+            rssi_value = data.split("RSSI:")[1].strip()
+            self.rssi.setText(f"📶 RSSI: {rssi_value}")
+            
+            # Cambiar color según intensidad de señal
+            try:
+                rssi_num = int(rssi_value.split()[0])
+                if rssi_num > -50:
+                    color = "#27ae60"  # Excelente
+                elif rssi_num > -70:
+                    color = "#f39c12"  # Buena
+                else:
+                    color = "#e74c3c"  # Débil
+                self.rssi.setStyleSheet(f"color: {color}; font-size: 12px;")
+            except:
+                pass
+        
+        if "Puerto local (escucha):" in data and "Puerto remoto (envío):" in data:
+            local_port = data.split("Puerto local (escucha):")[1].split()[0]
+            remote_port = data.split("Puerto remoto (envío):")[1].split()[0]
+            self.ports.setText(f"🔌 Puertos: Local {local_port} | Remoto {remote_port}")
+
+
+class ESP32Monitor(QMainWindow):
             QFrame {
                 background-color: rgba(255, 255, 255, 0.05);
                 border: 2px solid #95a5a6;

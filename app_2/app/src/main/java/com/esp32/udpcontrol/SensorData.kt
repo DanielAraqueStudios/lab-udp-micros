@@ -80,7 +80,7 @@ data class LedCommand(
  * Configuración de red para ESP32
  */
 data class NetworkConfig(
-    val esp32Ip: String = "10.175.23.159",
+    val esp32Ip: String = "192.168.43.101",  // IP actual del ESP32 en red paisanet
     val esp32Port: Int = 4210,        // Puerto donde escucha el ESP32
     val localPort: Int = 4211,        // Puerto local para recibir datos
     val connectionTimeout: Long = 5000L,

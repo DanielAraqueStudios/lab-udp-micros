@@ -4,13 +4,13 @@
 #include <ArduinoJson.h>
 
 // 🔹 Configura tu red WiFi
-const char* ssid = "Velasco";
-const char* password = "txcb1540";
+const char* ssid = "paisanet";
+const char* password = "paisanet";
 
-// 🔹 Configuración UDP (IPs en red 10.175.23.x)
+// 🔹 Configuración UDP (IPs en red 192.168.43.x)
 WiFiUDP udp;
 const int localUdpPort = 4210;  // Puerto local para escuchar comandos
-IPAddress phoneIP(10, 175, 23, 159);  // IP del teléfono Android (CORREGIDA)
+IPAddress phoneIP(192,168,43,8);  // IP del teléfono NEGRO (CAMBIAR XXX por IP real)
 const int phoneUdpPort = 4211;  // Puerto del teléfono para recibir datos
 char incomingPacket[255];  // Buffer para paquetes entrantes
 
@@ -163,6 +163,14 @@ void enviarDatosSensores() {
 
 void procesarComandoUDP() {
   int packetSize = udp.parsePacket();
+  
+  // Debug: Mostrar si hay paquetes disponibles
+  static unsigned long ultimoDebug = 0;
+  if (millis() - ultimoDebug > 5000) { // Cada 5 segundos
+    Serial.println("🔍 DEBUG: Escuchando puerto " + String(localUdpPort) + " - Sin paquetes recibidos");
+    ultimoDebug = millis();
+  }
+  
   if (packetSize) {
     contadorComandos++;
     
@@ -484,6 +492,40 @@ void loop() {
       Serial.println("   'status' o 'estado' - Mostrar estado completo del sistema");
       Serial.println("   'red' o 'network' - Mostrar información detallada de red");
       Serial.println("   'help' o 'ayuda' - Mostrar esta ayuda");
+      Serial.println("   'test1', 'test2', 'test3', 'test4' - Probar LEDs individualmente");
+      Serial.println("   'allon' - Encender todos los LEDs");
+      Serial.println("   'alloff' - Apagar todos los LEDs");
+      Serial.println("   'udptest' - Enviar paquete UDP de prueba al teléfono");
+    } else if (comando == "test1") {
+      estado1 = !estado1;
+      digitalWrite(led1, estado1 ? HIGH : LOW);
+      Serial.println("🧪 TEST LED 1: " + String(estado1 ? "🟢 ENCENDIDO" : "🔴 APAGADO"));
+    } else if (comando == "test2") {
+      estado2 = !estado2;
+      digitalWrite(led2, estado2 ? HIGH : LOW);
+      Serial.println("🧪 TEST LED 2: " + String(estado2 ? "🟢 ENCENDIDO" : "🔴 APAGADO"));
+    } else if (comando == "test3") {
+      estado3 = !estado3;
+      digitalWrite(led3, estado3 ? HIGH : LOW);
+      Serial.println("🧪 TEST LED 3: " + String(estado3 ? "🟢 ENCENDIDO" : "🔴 APAGADO"));
+    } else if (comando == "test4") {
+      estado4 = !estado4;
+      digitalWrite(led4, estado4 ? HIGH : LOW);
+      Serial.println("🧪 TEST LED 4: " + String(estado4 ? "🟢 ENCENDIDO" : "🔴 APAGADO"));
+    } else if (comando == "allon") {
+      estado1 = estado2 = estado3 = estado4 = true;
+      digitalWrite(led1, HIGH); digitalWrite(led2, HIGH); digitalWrite(led3, HIGH); digitalWrite(led4, HIGH);
+      Serial.println("🧪 TEST: 🟢 TODOS LOS LEDs ENCENDIDOS");
+    } else if (comando == "alloff") {
+      estado1 = estado2 = estado3 = estado4 = false;
+      digitalWrite(led1, LOW); digitalWrite(led2, LOW); digitalWrite(led3, LOW); digitalWrite(led4, LOW);
+      Serial.println("🧪 TEST: 🔴 TODOS LOS LEDs APAGADOS");
+    } else if (comando == "udptest") {
+      Serial.println("🧪 ENVIANDO PAQUETE UDP DE PRUEBA...");
+      udp.beginPacket(phoneIP, phoneUdpPort);
+      udp.print("PING_ESP32_OK");
+      udp.endPacket();
+      Serial.println("📤 Paquete UDP enviado a " + phoneIP.toString() + ":" + String(phoneUdpPort));
     }
   }
   

@@ -1,27 +1,86 @@
-# 🌐 ESP32 UDP Microcontroller Lab
+# 🚀 ESP32 UDP Microcontroller Lab
 
-Sistema distribuido de IoT que implementa comunicación UDP bidireccional entre un ESP32 y un teléfono Android para monitoreo de sensores y control remoto de actuadores.
+![ESP32](https://img.shields.io/badge/ESP32-E7352C?style=for-the-badge&logo=espressif&logoColor=white)
+![Arduino](https://img.shields.io/badge/Arduino-00979D?style=for-the-badge&logo=Arduino&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
-## 📋 Descripción del Proyecto
+Un sistema IoT completo que implementa comunicación UDP bidireccional entre un microcontrolador ESP32 y múltiples interfaces cliente para monitoreo de sensores y control remoto de actuadores.
 
-Este laboratorio desarrolla un sistema embebido distribuido donde el ESP32 actúa como servidor UDP conectado a una red WiFi local. El sistema:
+## 📋 Características
 
-- **Lee 2 sensores** (DHT11 y LDR) con frecuencia mínima de 4Hz
-- **Controla 4 actuadores digitales** (LEDs) remotamente  
-- **Comunica vía UDP** con una aplicación Android desarrollada en MIT App Inventor
-- **Transmite datos en tiempo real** con formato JSON estructurado
+- 🌡️ **Monitoreo de sensores en tiempo real** (DHT11 temperatura/humedad, LDR luminosidad)
+- 💡 **Control remoto de LEDs** via UDP
+- 📱 **App Android nativa** con Material Design 3
+- 🖥️ **Monitor PyQt6** con gráficas en tiempo real
+- 🌐 **Aplicación web móvil** responsive
+- 📡 **Comunicación UDP a 4Hz** (250ms)
+- 🔄 **Protocolo de texto simple** compatible con múltiples plataformas
+
+## 🏗️ Arquitectura del Sistema
+
+```
+┌─────────────────┐    UDP 4211    ┌──────────────────┐
+│     ESP32       │───────────────▶│   Clientes       │
+│  📡 WiFi        │                │  📱 Android      │
+│  🌡️ DHT11       │                │  🖥️ PyQt6       │
+│  ☀️ LDR         │                │  🌐 Web App     │
+│  💡 4x LEDs     │◀───────────────│                  │
+└─────────────────┘    UDP 4210    └──────────────────┘
+```
 
 ## 🔧 Hardware Requerido
 
-### Microcontrolador
-- ESP32 o ESP32-S3
+### Componentes Principales
+- **ESP32 o ESP32-S3** microcontrolador
+- **DHT11** sensor de temperatura y humedad
+- **LDR** sensor de luminosidad
+- **4x LEDs** con resistencias limitadoras
+- **Resistencias** para divisor de voltaje (LDR)
+- **Protoboard y cables** de conexión
 
-### Sensores
-- **DHT11**: Sensor de temperatura y humedad
-- **LDR + Resistencia**: Sensor de luminosidad con divisor resistivo
+### Conexiones
+```
+DHT11:  Data → GPIO 4,  VCC → 3.3V,  GND → GND
+LDR:    Signal → GPIO 3 (con divisor de voltaje)
+LEDs:   Ánodos → GPIO 5, 18, 2, 21 (con resistencias)
+```
 
-### Actuadores
-- **4 LEDs** con resistencias limitadoras (220Ω recomendado)
+## 🚀 Inicio Rápido
+
+### 1. Configuración del ESP32
+
+1. **Instalar librerías en Arduino IDE:**
+   ```
+   - DHT sensor library (Adafruit)
+   - ArduinoJson (Benoit Blanchon)
+   ```
+
+2. **Configurar WiFi en `main.ino`:**
+   ```cpp
+   const char* ssid = "TU_WIFI";
+   const char* password = "TU_PASSWORD";
+   ```
+
+3. **Cargar código al ESP32** y obtener IP desde Serial Monitor
+
+### 2. Configuración de Clientes
+
+#### Android App
+```bash
+cd app_2/
+./gradlew assembleDebug
+# Instalar APK en dispositivo
+```
+
+#### Monitor PyQt6
+```bash
+pip install PyQt6 pyqtgraph pyserial
+python esp32_serial_monitor.py
+```
+
+#### Web App
+Abrir `esp32_mobile_web.html` en navegador móvil
 
 ### Conexiones
 

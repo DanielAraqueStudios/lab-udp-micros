@@ -1,60 +1,79 @@
 # ESP32 UDP Microcontroller Lab - AI Coding Agent Instructions
 
 ## Project Overview
-This is an ESP32 Arduino project that implements a distributed IoT system using UDP protocol for bidirectional communication between an ESP32 microcontroller and an Android phone. The system reads two sensors (DHT11 and LDR) and controls four digital actuators (LEDs) remotely.
+This is a complete ESP32 Arduino project that implements a distributed IoT system using UDP protocol for bidirectional communication between an ESP32 microcontroller and multiple client interfaces. The system reads two sensors (DHT11 and LDR) and controls four digital actuators (LEDs) remotely through WiFi networking.
 
 ## Architecture & Design Patterns
 
 ### Hardware Configuration
 - **Target Platform**: ESP32/ESP32-S3 microcontroller
-- **Sensors**: DHT11 (temp/humidity) on GPIO 4, LDR (light) on GPIO 34
-- **Actuators**: 4 LEDs on GPIO 5, 18, 36, 21
+- **Sensors**: DHT11 (temp/humidity) on GPIO 4, LDR (light) on GPIO 3
+- **Actuators**: 4 LEDs on GPIO 5, 18, 2, 21 (GPIO 36 replaced with GPIO 2 due to input-only limitation)
 - **Communication**: WiFi + UDP protocol (bidirectional)
-- **Serial**: 115200 baud for debugging
+- **Serial**: 115200 baud for debugging and manual testing
 
 ### Code Structure
 - **Single File Architecture**: All code resides in `main.ino` following Arduino IDE conventions
 - **UDP Server/Client**: ESP32 acts as both UDP server (listening) and client (sending)
 - **Real-time Data**: Sensors read at 4Hz minimum (250ms intervals)
-- **JSON Protocol**: Structured messages for sensor data and control commands
+- **Text Protocol**: Simple semicolon-separated format for broad compatibility
 
 ### Network Configuration
 ```cpp
 // WiFi and UDP settings in main.ino
-const char* ssid = "TU_SSID";
-const char* password = "TU_PASSWORD";
-IPAddress phoneIP(192, 168, 1, 100);  // Android phone IP
-const int localUdpPort = 4210;        // ESP32 listening port
-const int phoneUdpPort = 4211;        // Phone listening port
+const char* ssid = "paisanet";         // WiFi network name
+const char* password = "paisanet";     // WiFi password
+IPAddress phoneIP(192,168,43,8);       // Target device IP for sensor data
+const int localUdpPort = 4210;         // ESP32 listening port for commands
+const int phoneUdpPort = 4211;         // Target port for sending sensor data
 ```
 
 ## Communication Protocol
 
-### Sensor Data (ESP32 → Phone)
+### Sensor Data (ESP32 → Client)
 **Frequency**: 4Hz (every 250ms)  
 **Port**: 4211  
-**Format**: JSON
-```json
-{
-  "temp": 25.6,
-  "hum": 60.2, 
-  "luz": 75,
-  "led1": true,
-  "led2": false,
-  "led3": true,
-  "led4": false,
-  "error_dht": false,
-  "wifi_ok": true,
-  "timestamp": 123456
-}
+**Format**: Text (semicolon-separated)
+```
+23.0;33.3;100;0;0;0;0;0;1
+```
+**Fields**: `temp;humidity;light;led1;led2;led3;led4;error_dht;wifi_ok`
+
+### Control Commands (Client → ESP32)
+**Port**: 4210  
+**Format**: Text commands
+```
+Examples:
+"1" - Toggle LED 1
+"2" - Toggle LED 2  
+"3" - Toggle LED 3
+"4" - Toggle LED 4
+"0" - Turn off all LEDs
+"LED1_ON" - Turn on LED 1
+"LED2_OFF" - Turn off LED 2
+"1;0;1;0" - Set all LED states at once
+"GET_DATA" - Request immediate sensor data
 ```
 
-### Control Commands (Phone → ESP32)
-**Port**: 4210  
-**Format**: JSON
-```json
-{"led1": true, "led2": false, "led3": true, "led4": false}
-```
+## Client Applications
+
+### 1. Android App (Primary Interface)
+- **Path**: `app_2/` directory
+- **Language**: Kotlin with Material 3 design
+- **Features**: Real-time sensor monitoring, LED control, dynamic IP configuration
+- **Architecture**: MVVM with coroutines and StateFlow
+- **Build**: `./gradlew assembleDebug` generates APK
+
+### 2. PyQt6 Desktop Monitor
+- **Path**: `esp32_serial_monitor.py`
+- **Features**: Serial monitoring, real-time graphs, LED control via serial commands
+- **Requirements**: PyQt6, pyqtgraph, pyserial
+- **Usage**: Direct ESP32 debugging and visualization
+
+### 3. Mobile Web App
+- **Path**: `esp32_mobile_web.html`
+- **Features**: Responsive design, UDP communication, cross-platform compatibility
+- **Usage**: Direct browser access for instant control
 
 ## Development Workflow
 
@@ -72,25 +91,32 @@ Required libraries in Arduino IDE:
 2. Configure WiFi credentials and phone IP in `main.ino`
 3. Upload to ESP32/ESP32-S3
 4. Monitor serial output at 115200 baud for IP and status
-5. Configure MIT App Inventor app with ESP32 IP
+5. Configure client apps with ESP32 IP address
 
 ### Hardware Connections
 - **DHT11**: Data pin → GPIO 4, VCC → 3.3V, GND → GND
-- **LDR**: Signal → GPIO 34 (with voltage divider), VCC → 3.3V, GND → GND  
-- **LEDs**: Anodes → GPIO 5,18,36,21 (with resistors), Cathodes → GND
+- **LDR**: Signal → GPIO 3 (with voltage divider), VCC → 3.3V, GND → GND  
+- **LEDs**: Anodes → GPIO 5,18,2,21 (with current-limiting resistors), Cathodes → GND
+
+### Network Setup
+1. **WiFi Configuration**: ESP32 connects to specified network
+2. **IP Discovery**: ESP32 prints its IP address via serial monitor
+3. **Client Configuration**: Update client apps with ESP32 IP address
+4. **Port Configuration**: ESP32 listens on 4210, sends to 4211
 
 ### Debugging Patterns
 - **Serial Monitor**: Primary debugging with emoji-coded messages (🔹, ✅, 🌐, 📡)
 - **Network Discovery**: ESP32 prints IP addresses and port configuration
 - **Real-time Logging**: Sensor readings and command processing logged
 - **Error Detection**: WiFi disconnection, DHT sensor failures tracked
+- **Manual Testing**: Serial commands (test1, test2, allon, alloff, status, udptest)
 
 ## Key Implementation Details
 
 ### Error Handling
 - **WiFi Reconnection**: Automatic reconnection on WiFi loss
 - **Sensor Validation**: DHT11 NaN detection and error flagging
-- **UDP Communication**: Graceful handling of malformed JSON packets
+- **UDP Communication**: Graceful handling of malformed packets
 
 ### Timing and Performance
 - **Non-blocking Loop**: Main loop optimized for real-time performance
@@ -101,24 +127,26 @@ Required libraries in Arduino IDE:
 When adding new sensors or actuators:
 1. Add pin constants after existing definitions
 2. Update `leerSensores()` function for new sensor readings
-3. Modify JSON structure in `enviarDatosSensores()`
+3. Modify text format in `enviarDatosSensores()`
 4. Add command processing in `procesarComandoUDP()`
 5. Update error handling variables as needed
 
-### MIT App Inventor Integration
-- **Receive**: Listen on port 4211 for sensor data JSON
-- **Send**: Send commands to ESP32 IP on port 4210
-- **Parse**: Decode JSON for temperature, humidity, light, LED states
-- **Display**: Real-time updates of sensor values and actuator states
+### Client Integration
+- **Android App**: Connect using ESP32 IP on port 4210, listen on port 4211
+- **PyQt6 Monitor**: Serial connection for debugging and LED control
+- **Web App**: Direct UDP communication via JavaScript WebRTC/Socket APIs
+- **Protocol Compatibility**: Text format ensures broad device support
 
 ## Testing Strategy
 - **Network Connectivity**: Verify WiFi connection and IP assignment
 - **Sensor Validation**: Check DHT11 and LDR readings via serial monitor
-- **UDP Communication**: Test bidirectional data flow with network tools
-- **App Integration**: Validate complete system with MIT App Inventor app
+- **LED Hardware**: Test individual LEDs with serial commands (test1, test2, etc.)
+- **UDP Communication**: Test bidirectional data flow with client apps
+- **Error Recovery**: Test WiFi disconnection and sensor failure scenarios
 
 ## Deployment Notes
-- **Network Requirements**: ESP32 and phone must be on same WiFi network
-- **IP Configuration**: Update `phoneIP` to match Android device IP
+- **Network Requirements**: ESP32 and clients must be on same WiFi network
+- **IP Configuration**: Update client apps with ESP32 IP address from serial monitor
 - **Firewall**: Ensure UDP ports 4210/4211 are not blocked
 - **Power Supply**: Stable 3.3V/5V supply recommended for sensor accuracy
+- **Hardware Verification**: Use serial commands to verify LED connectivity before UDP testing
