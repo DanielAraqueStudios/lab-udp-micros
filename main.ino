@@ -10,7 +10,7 @@ const char* password = "paisanet";
 // 🔹 Configuración UDP (IPs en red 192.168.43.x)
 WiFiUDP udp;
 const int localUdpPort = 4210;  // Puerto local para escuchar comandos
-IPAddress phoneIP(192,168,43,8);  // IP del teléfono NEGRO (CAMBIAR XXX por IP real)
+IPAddress phoneIP(192,168,43,138);  // IP del teléfono NEGRO (CAMBIAR XXX por IP real)
 const int phoneUdpPort = 4211;  // Puerto del teléfono para recibir datos
 char incomingPacket[255];  // Buffer para paquetes entrantes
 
@@ -23,8 +23,8 @@ DHT dht(DHT_PIN, DHT_TYPE);
 // 🔹 Pines de los LEDs (actuadores)
 const int led1 = 5;
 const int led2 = 18;
-const int led3 = 2;   // Cambiado de 36 (input-only) a 2 (válido output)
-const int led4 = 21;
+const int led3 = 15;   // Cambiado de 36 (input-only) a 2 (válido output)
+const int led4 = 7;
 
 // 🔹 Estados de los LEDs (actuadores)
 bool estado1 = false;

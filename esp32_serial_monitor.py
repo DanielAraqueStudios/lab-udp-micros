@@ -515,78 +515,6 @@ class NetworkInfo(QFrame):
 
 
 class ESP32Monitor(QMainWindow):
-            QFrame {
-                background-color: rgba(255, 255, 255, 0.05);
-                border: 2px solid #95a5a6;
-                border-radius: 10px;
-                margin: 3px;
-                padding: 8px;
-            }
-        """)
-        
-        layout = QVBoxLayout()
-        
-        # Título
-        title = QLabel(f"LED {led_number}")
-        title.setStyleSheet("font-weight: bold; color: #ecf0f1; font-size: 12px;")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # GPIO Info
-        gpio_info = QLabel(f"GPIO {gpio_pin}")
-        gpio_info.setStyleSheet("color: #95a5a6; font-size: 10px;")
-        gpio_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # Indicador visual
-        self.indicator = QLabel("●")
-        self.indicator.setStyleSheet("font-size: 24px; color: #7f8c8d;")
-        self.indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        # Estado texto
-        self.status_label = QLabel("OFF")
-        self.status_label.setStyleSheet("color: #95a5a6; font-size: 10px; font-weight: bold;")
-        self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        layout.addWidget(title)
-        layout.addWidget(gpio_info)
-        layout.addWidget(self.indicator)
-        layout.addWidget(self.status_label)
-        
-        self.setLayout(layout)
-        self.setFixedHeight(100)
-    
-    def update_status(self, is_on):
-        """Actualizar estado del LED"""
-        self.is_on = is_on
-        
-        if is_on:
-            self.indicator.setStyleSheet("font-size: 24px; color: #27ae60;")
-            self.status_label.setText("ON")
-            self.status_label.setStyleSheet("color: #27ae60; font-size: 10px; font-weight: bold;")
-            self.setStyleSheet("""
-                QFrame {
-                    background-color: rgba(39, 174, 96, 0.1);
-                    border: 2px solid #27ae60;
-                    border-radius: 10px;
-                    margin: 3px;
-                    padding: 8px;
-                }
-            """)
-        else:
-            self.indicator.setStyleSheet("font-size: 24px; color: #7f8c8d;")
-            self.status_label.setText("OFF")
-            self.status_label.setStyleSheet("color: #95a5a6; font-size: 10px; font-weight: bold;")
-            self.setStyleSheet("""
-                QFrame {
-                    background-color: rgba(255, 255, 255, 0.05);
-                    border: 2px solid #95a5a6;
-                    border-radius: 10px;
-                    margin: 3px;
-                    padding: 8px;
-                }
-            """)
-
-
-class ESP32SerialMonitor(QMainWindow):
     """Ventana principal de la aplicación"""
     
     def __init__(self):
@@ -1095,7 +1023,7 @@ def main():
     app.setOrganizationName("Daniel Araque Studios")
     
     # Crear y mostrar ventana principal
-    window = ESP32SerialMonitor()
+    window = ESP32Monitor()
     window.show()
     
     # Ejecutar aplicación
